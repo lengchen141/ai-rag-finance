@@ -100,11 +100,11 @@ pip install langchain langchain-openai langchain-community \
 
 ### 3. 配置 API Key
 
-编辑 `rag_api_server.py`，填入你的阿里云 DashScope API Key：
+编辑 `.env`，填入你的 API Key：
 
 ```python
-os.environ["DASHSCOPE_API_KEY"] = "你的 DashScope Key"
-os.environ["OPENAI_API_KEY"]    = "你的 DashScope Key"  # 同一个 Key
+DASHSCOPE_API_KEY=你的apikey
+OPENAI_API_KEY=你的apikey
 ```
 
 > DashScope Key 在[阿里云百炼控制台](https://bailian.console.aliyun.com/)获取。
