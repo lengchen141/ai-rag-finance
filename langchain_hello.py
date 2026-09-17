@@ -1,13 +1,17 @@
+
+import os
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
+from dotenv import load_dotenv
 
-# 1. 模型 —— 还是通义千问，langchain-openai兼容dashscope
-API_KEY = "sk-ws-H.PMLEIHI.37If.MEYCIQC0gEgk4lT4lSPqWETiidM64fbSfWTCd0wLZC3pwjp6NQIhAIWriH1fEzNIZvOX8yRIaeBjcDSxQGV7Zp4iN9cWqUEL"
+# ============ 1. 配置 ============
+# key换成你自己的
+load_dotenv()
 
 llm = ChatOpenAI(
     model="qwen-plus",
-    api_key=API_KEY,
+    api_key=os.getenv("OPENAI_API_KEY"),
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
 )
 

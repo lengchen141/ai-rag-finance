@@ -1,13 +1,4 @@
----
-AIGC:
-    Label: "1"
-    ContentProducer: 001191110102MACQD9K64018705
-    ProduceID: 322602165630460_0-drive/220546414367104461/career_ai_transition/README_ai_rag_finance.md
-    ReservedCode1: ""
-    ContentPropagator: 001191110102MACQD9K64028705
-    PropagateID: 322602165630460#1789659408709
-    ReservedCode2: ""
----
+
 # 金融研报 RAG 问答系统
 
 > 基于真实研报 PDF 的 RAG（Retrieval-Augmented Generation，检索增强生成）问答系统

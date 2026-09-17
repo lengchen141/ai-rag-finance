@@ -6,12 +6,15 @@ W3 Day2: LangChain RetrievalQA Chain 封装RAG
   - Chain ≈ Java Stream管道，数据从Loader → Splitter → VectorStore → QA Chain 一路流过去
 """
 import os
+from dotenv import load_dotenv
 
 # ============ 1. 配置 ============
-API_KEY = "sk-ws-H.PMLEIHI.37If.MEYCIQC0gEgk4lT4lSPqWETiidM64fbSfWTCd0wLZC3pwjp6NQIhAIWriH1fEzNIZvOX8yRIaeBjcDSxQGV7Zp4iN9cWqUEL"
+# key换成你自己的
+load_dotenv()
 
-os.environ["DASHSCOPE_API_KEY"] = API_KEY
-os.environ["OPENAI_API_KEY"] = API_KEY
+os.environ["DASHSCOPE_API_KEY"] = os.getenv("DASHSCOPE_API_KEY")
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
+
 
 # ============ 2. Document Loading（替代昨天的PdfReader）============
 from langchain_community.document_loaders import PyPDFLoader

@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from openai import OpenAI
+import os
+from dotenv import load_dotenv
 
 # ========== FastAPI 初始化 ==========
 # 相当于 Java 的 SpringApplication.run() 但简洁得多
@@ -17,9 +19,10 @@ class ChatResponse(BaseModel):
     model: str = "qwen-plus"
 
 # ========== 初始化 AI 客户端 ==========
-API_KEY = "sk-ws-H.PMLEIHI.37If.MEYCIQC0gEgk4lT4lSPqWETiidM64fbSfWTCd0wLZC3pwjp6NQIhAIWriH1fEzNIZvOX8yRIaeBjcDSxQGV7Zp4iN9cWqUEL"
+load_dotenv()
+
 client = OpenAI(
-    api_key=API_KEY,
+    api_key=os.getenv("OPENAI_API_KEY"),
     base_url="https://ws-ndaimedbdbwxttvo.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
 )
 

@@ -19,13 +19,13 @@ import shutil
 from pathlib import Path
 from uuid import uuid4
 from typing import Optional
-
+from dotenv import load_dotenv
 # ============ 1. 配置 ============
 # key换成你自己的
-API_KEY = "sk-ws-H.PMLEIHI.37If.MEYCIQC0gEgk4lT4lSPqWETiidM64fbSfWTCd0wLZC3pwjp6NQIhAIWriH1fEzNIZvOX8yRIaeBjcDSxQGV7Zp4iN9cWqUEL"
+load_dotenv()
 
-os.environ["DASHSCOPE_API_KEY"] = API_KEY
-os.environ["OPENAI_API_KEY"] = API_KEY
+os.environ["DASHSCOPE_API_KEY"] = os.getenv("DASHSCOPE_API_KEY")
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 
 PDF_PATH = "/Users/lengchen/Downloads/恒生电子2026半年报.pdf"   # 和昨天同一个PDF
 UPLOAD_DIR = Path("uploads")

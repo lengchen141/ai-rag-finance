@@ -9,14 +9,14 @@ import os
 from langchain_community.embeddings import DashScopeEmbeddings
 from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from dotenv import load_dotenv
 
 # ============ 1. Embedding配置（通义DashScope兼容模式）============
 # key换成你自己的
-API_KEY = "sk-ws-H.PMLEIHI.37If.MEYCIQC0gEgk4lT4lSPqWETiidM64fbSfWTCd0wLZC3pwjp6NQIhAIWriH1fEzNIZvOX8yRIaeBjcDSxQGV7Zp4iN9cWqUEL"
+load_dotenv()
 
-os.environ["DASHSCOPE_API_KEY"] = API_KEY
-# OpenAI兼容协议用（ChatOpenAI调LLM用）
-os.environ["OPENAI_API_KEY"] = API_KEY
+os.environ["DASHSCOPE_API_KEY"] = os.getenv("DASHSCOPE_API_KEY")
+os.environ["OPENAI_API_KEY"] = os.getenv("OPENAI_API_KEY")
 embeddings = DashScopeEmbeddings(
     model="text-embedding-v3",
     dashscope_api_key=os.environ["DASHSCOPE_API_KEY"],

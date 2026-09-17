@@ -2,7 +2,11 @@ import json
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
 from langchain_core.messages import HumanMessage, ToolMessage
-
+import os
+from dotenv import load_dotenv
+# ============ 1. 配置 ============
+# key换成你自己的
+load_dotenv()
 # ========== 1. 定义工具（相当于 Java 里一个普通方法，加个 @tool 注解）==========
 
 @tool
@@ -26,11 +30,10 @@ def exchange_rate(usd_amount: float) -> str:
     return f"{usd_amount} 美元 ≈ {usd_amount * rate:.2f} 人民币（汇率7.25）"
 
 # ========== 2. 把工具注册给大模型 ==========
-API_KEY = "sk-ws-H.PMLEIHI.37If.MEYCIQC0gEgk4lT4lSPqWETiidM64fbSfWTCd0wLZC3pwjp6NQIhAIWriH1fEzNIZvOX8yRIaeBjcDSxQGV7Zp4iN9cWqUEL"
 
 llm = ChatOpenAI(
     model="qwen-plus",
-    api_key=API_KEY,
+    api_key=os.getenv("OPENAI_API_KEY"),
     base_url="https://dashscope.aliyuncs.com/compatible-mode/v1"
 )
 
