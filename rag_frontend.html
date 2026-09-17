@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>金融研报RAG问答</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            width: 100%;
+            max-width: 800px;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 8px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        #question {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.2s;
+        }
+
+        #question:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        #askBtn {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: transform 0.1s, box-shadow 0.2s;
+        }
+
+        #askBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        #askBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result {
+            display: none;
+            margin-top: 24px;
+        }
+
+        .result.show {
+            display: block;
+        }
+
+        .answer-box {
+            background: #f8f9fa;
+            border-left: 4px solid #667eea;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            line-height: 1.8;
+            color: #333;
+            white-space: pre-wrap;
+        }
+
+        .sources {
+            margin-top: 20px;
+        }
+
+        .sources h3 {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 12px;
+        }
+
+        .source-item {
+            background: #f0f0f0;
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 8px;
+            font-size: 13px;
+            color: #555;
+        }
+
+        .loading {
+            text-align: center;
+            color: #667eea;
+            font-size: 14px;
+        }
+
+        .error {
+            background: #fee;
+            border-left: 4px solid #e74c3c;
+            padding: 16px;
+            border-radius: 8px;
+            color: #c0392b;
+        }
+
+        .upload-section {
+            margin-bottom: 24px;
+        }
+
+        .upload-area {
+            border: 2px dashed #e0e0e0;
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fafafa;
+        }
+
+        .upload-area:hover,
+        .upload-area.dragover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+
+        .upload-content p {
+            margin: 8px 0;
+            color: #666;
+        }
+
+        .upload-content .link {
+            color: #667eea;
+            font-weight: 500;
+        }
+
+        .upload-content .hint {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .file-list {
+            margin-top: 12px;
+        }
+
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 10px 14px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .file-item .name {
+            color: #333;
+            flex: 1;
+        }
+
+        .file-item .delete {
+            color: #e74c3c;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+
+        .file-item .delete:hover {
+            background: #fee;
+        }
+
+        /* 上传进度遮罩 */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .overlay.show {
+            display: flex;
+        }
+
+        .overlay-content {
+            background: white;
+            padding: 40px 60px;
+            border-radius: 16px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .overlay-text {
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .overlay-hint {
+            color: #999;
+            font-size: 13px;
+        }
+
+        /* 对话历史区 */
+        .chat-history {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 16px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            min-height: 100px;
+        }
+
+        .welcome-msg {
+            text-align: center;
+            color: #999;
+            padding: 40px 20px;
+        }
+
+        .welcome-msg p {
+            margin: 8px 0;
+        }
+
+        .welcome-msg .hint {
+            font-size: 13px;
+        }
+
+        .message {
+            margin-bottom: 16px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .message.user {
+            align-items: flex-end;
+        }
+
+        .message.assistant {
+            align-items: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 12px 16px;
+            border-radius: 12px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.assistant .message-bubble {
+            background: white;
+            color: #333;
+            border: 1px solid #e0e0e0;
+            border-bottom-left-radius: 4px;
+        }
+
+        .message-sources {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #999;
+            max-width: 80%;
+        }
+
+        .message-sources details {
+            background: #f0f0f0;
+            padding: 8px;
+            border-radius: 6px;
+        }
+
+        .message-sources summary {
+            cursor: pointer;
+            color: #666;
+        }
+
+        .source-item {
+            margin-top: 6px;
+            padding: 6px;
+            background: #e8e8e8;
+            border-radius: 4px;
+            font-size: 11px;
+        }
+
+        /* 新对话按钮 */
+        .secondary {
+            background: #f0f0f0;
+            color: #666;
+            border: none;
+            padding: 14px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        .secondary:hover {
+            background: #e0e0e0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>金融研报RAG问答</h1>
+        <p class="subtitle">基于真实研报PDF · AI检索增强生成</p>
+        <!-- 新增：PDF上传区域 -->
+        <div class="upload-section">
+            <div class="upload-area" id="uploadArea">
+                <input type="file" id="fileInput" accept=".pdf" multiple style="display:none">
+                <div class="upload-content">
+                    <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#667eea" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    <p>拖拽PDF到此处，或 <span class="link">点击上传</span></p>
+                    <p class="hint">支持多个PDF，上传后自动重建知识库</p>
+                </div>
+            </div>
+            <div id="fileList" class="file-list"></div>
+        </div>
+        <!-- 新增：对话历史区 -->
+        <div class="chat-history" id="chatHistory">
+            <div class="welcome-msg">
+                <p> 欢迎使用金融研报RAG问答</p>
+                <p class="hint">上传PDF后，可以开始提问。支持多轮对话，我会记住上下文。</p>
+            </div>
+        </div>
+
+        <!-- 改动：输入区 -->
+        <div class="input-group">
+            <input type="text" id="question" placeholder="例如：公司AI业务布局和进展？" onkeypress="if(event.key==='Enter') ask()">
+            <button id="askBtn" onclick="ask()">发送</button>
+            <button id="clearBtn" onclick="clearSession()" class="secondary">新对话</button>
+        </div>
+
+
+
+
+        <div id="loading" class="loading" style="display:none;">思考中...</div>
+    </div>
+    <!-- 上传进度遮罩 -->
+    <div class="overlay" id="overlay">
+        <div class="overlay-content">
+            <div class="spinner"></div>
+            <div class="overlay-text" id="overlayText">正在处理PDF...</div>
+            <div class="overlay-hint">切块 + 向量化 + 重建知识库</div>
+        </div>
+    </div>
+    <script>
+        const API_BASE = 'http://localhost:8002';
+
+
+        let sessionId = null;  // 当前会话ID
+
+        // 页面加载时获取或创建session
+        window.onload = () => {
+            loadDocuments();
+            sessionId = localStorage.getItem('rag_session_id');
+            if (!sessionId) {
+                sessionId = 'new';  // 第一次访问，不传session_id让后端创建
+            }
+        };
+
+        // 上传区域点击事件
+        document.getElementById('uploadArea').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        // 文件选择事件
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            handleFiles(e.target.files);
+        });
+
+        // 拖拽事件
+        const uploadArea = document.getElementById('uploadArea');
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadArea.classList.add('dragover');
+        });
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('dragover');
+        });
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadArea.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        });
+
+        async function handleFiles(files) {
+            const overlay = document.getElementById('overlay');
+            const overlayText = document.getElementById('overlayText');
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                if (!file.name.endsWith('.pdf')) {
+                    alert(`跳过非PDF文件：${file.name}`);
+                    continue;
+                }
+
+                // 显示遮罩
+                overlayText.textContent = `正在处理 ${file.name}...`;
+                overlay.classList.add('show');
+
+                const formData = new FormData();
+                formData.append('file', file);
+
+                try {
+                    const resp = await fetch(`${API_BASE}/upload`, {
+                        method: 'POST',
+                        body: formData,
+                    });
+                    if (!resp.ok) throw new Error(`上传失败：${resp.status}`);
+                    const data = await resp.json();
+                    console.log(`✅ ${file.name} 上传成功，共 ${data.total_pdfs} 个PDF`);
+                } catch (err) {
+                    alert(`❌ ${file.name} 上传失败：${err.message}`);
+                }
+            }
+
+            // 隐藏遮罩，刷新列表
+            overlay.classList.remove('show');
+            await loadDocuments();
+        }
+
+        async function loadDocuments() {
+            try {
+                const resp = await fetch(`${API_BASE}/documents`);
+                const data = await resp.json();
+
+                const fileList = document.getElementById('fileList');
+                if (data.documents.length === 0) {
+                    fileList.innerHTML = '<p style="color:#999;font-size:13px;">暂无PDF，请上传</p>';
+                    return;
+                }
+
+                fileList.innerHTML = data.documents.map(name => `
+                    <div class="file-item">
+                        <span class="name">📄 ${name}</span>
+                        <span class="delete" onclick="deleteDocument('${name}')">删除</span>
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error('加载文档列表失败:', err);
+            }
+        }
+
+        async function deleteDocument(filename) {
+            if (!confirm(`确定删除 ${filename} 吗？`)) return;
+
+            try {
+                const resp = await fetch(`${API_BASE}/documents/${filename}`, {
+                    method: 'DELETE',
+                });
+                if (!resp.ok) throw new Error(`删除失败：${resp.status}`);
+                await loadDocuments();
+            } catch (err) {
+                alert(`❌ 删除失败：${err.message}`);
+            }
+        }
+
+
+        async function ask() {
+            const question = document.getElementById('question').value.trim();
+            if (!question) return;
+
+            const btn = document.getElementById('askBtn');
+            const input = document.getElementById('question');
+            const chatHistory = document.getElementById('chatHistory');
+
+            btn.disabled = true;
+            input.disabled = true;
+
+            // 添加用户消息到聊天区
+            appendMessage('user', question);
+
+            // 清空输入框
+            input.value = '';
+
+            try {
+                const url = `${API_BASE}/ask?question=${encodeURIComponent(question)}&session_id=${sessionId === 'new' ? '' : sessionId}`;
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+
+                const data = await resp.json();
+
+                // 保存session_id
+                sessionId = data.session_id;
+                localStorage.setItem('rag_session_id', sessionId);
+
+                // 添加助手回答
+                appendMessage('assistant', data.answer, data.sources);
+
+                // 滚动到底部
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            } catch (err) {
+                appendMessage('assistant', `❌ 请求失败：${err.message}`);
+            } finally {
+                btn.disabled = false;
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        function appendMessage(role, content, sources = null) {
+            const chatHistory = document.getElementById('chatHistory');
+
+            // 如果是第一条消息，清除欢迎语
+            if (chatHistory.querySelector('.welcome-msg')) {
+                chatHistory.innerHTML = '';
+            }
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+
+            const bubble = document.createElement('div');
+            bubble.className = 'message-bubble';
+            bubble.textContent = content;
+            msgDiv.appendChild(bubble);
+
+            // 如果是助手回答且有资料来源，显示可折叠的参考资料
+            if (role === 'assistant' && sources && sources.length > 0) {
+                const sourcesDiv = document.createElement('div');
+                sourcesDiv.className = 'message-sources';
+                sourcesDiv.innerHTML = `
+                    <details>
+                        <summary> 参考资料（${sources.length}条）</summary>
+                        ${sources.map((s, i) => `<div class="source-item">[${i + 1}] ${s}</div>`).join('')}
+                    </details>
+                `;
+                msgDiv.appendChild(sourcesDiv);
+            }
+
+            chatHistory.appendChild(msgDiv);
+        }
+
+        async function clearSession() {
+            if (!confirm('确定开始新对话吗？当前对话历史将清空。')) return;
+
+            try {
+                if (sessionId && sessionId !== 'new') {
+                    await fetch(`${API_BASE}/session/${sessionId}`, { method: 'DELETE' });
+                }
+                sessionId = 'new';
+                localStorage.removeItem('rag_session_id');
+
+                // 清空聊天区
+                document.getElementById('chatHistory').innerHTML = `
+                    <div class="welcome-msg">
+                        <p>👋 新对话已开始</p>
+                        <p class="hint">上传PDF后，可以开始提问。支持多轮对话，我会记住上下文。</p>
+                    </div>
+                `;
+            } catch (err) {
+                alert(`❌ 清空会话失败：${err.message}`);
+            }
+        }
+    </script>
+</body>
+
+</html>
